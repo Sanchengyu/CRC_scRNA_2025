@@ -1,0 +1,67 @@
+rm(list=ls())
+source('scRNA_scripts/lib.R')
+#设置工作路径setwd()
+getwd()
+####单个txt/csv/tsv数据读取###
+# 一般下载下来的都是tar结尾的压缩文件
+untar("GSE221575/GSE221575_RAW.tar",exdir = "GSE221575/GSE221575_RAW")
+#对压缩文件进行解压 函数untar
+dir='GSE221575/GSE221575_RAW' 
+fs=list.files('GSE221575/GSE221575_RAW/','^GSM')
+#按照正则表达式进行文件的列出
+?list.files
+fs
+library(tidyverse)
+samples=str_split(fs,'_',simplify = T)[,1]
+按照_进行字符分割，并保存为矩阵的形式
+samples
+##处理数据，将原始文件分别整理为barcodes.tsv.gz，features.tsv.gz和matrix.mtx.gz到各自的文件夹
+#批量将文件名改为 Read10X()函数能够识别的名字
+if(T){
+  lapply(unique(samples),function(x){
+    # x = unique(samples)[1]
+    y=fs[grepl(x,fs)]
+    folder=paste0("GSE221575/GSE221575_RAW/", paste(str_split(y[1],'_',simplify = T)[,1:2], collapse = "_"))
+    dir.create(folder,recursive = T)
+    #为每个样本创建子文件夹
+    file.rename(paste0("GSE221575/GSE221575_RAW/",y[1]),file.path(folder,"barcodes.tsv.gz"))
+    #重命名文件，并移动到相应的子文件夹里
+    file.rename(paste0("GSE221575/GSE221575_RAW/",y[2]),file.path(folder,"features.tsv.gz"))
+    file.rename(paste0("GSE221575/GSE221575_RAW/",y[3]),file.path(folder,"matrix.mtx.gz"))
+  })
+}
+#循环函数，并对文件进行清洗、重命名，以符合可以创建seruat对象的源文件格式
+samples=list.files( dir )
+samples 
+sceList = lapply(samples,function(pro){ 
+  # pro=samples[1] 
+  print(pro)  
+  tmp = Read10X(file.path(dir,pro )) 
+  if(length(tmp)==2){
+    ct = tmp[[1]] 
+  }else{ct = tmp}
+  sce =CreateSeuratObject(counts =  ct ,
+                          project =  pro  ,
+                          min.cells = 5,
+                          min.features = 300 )
+  return(sce)
+}) 
+#读取数据，并创建为seruat对象。
+do.call(rbind,lapply(sceList, dim)) 
+##       [,1] [,2]
+## [1,] 18506 3760
+## [2,] 20137 2959
+## [3,] 19179 4793
+## [4,] 19766 4994
+## [5,] 20505 5290
+sce.all=merge(x=sceList[[1]],
+              y=sceList[ -1 ],   add.cell.ids = samples ) 
+names(sce.all@assays$RNA@layers)
+sce.all[["RNA"]]$counts[1:5,1:5]
+LayerData(sce.all,assay = "RNA", layer = "counts")
+sce.all <- JoinLayers(sce.all)
+dim(sce.all[["RNA"]]$counts )
+
+as.data.frame(sce.all@assays$RNA$counts[1:10, 1:2])
+head(sce.all@meta.data, 10)
+table(sce.all$orig.ident) 
