@@ -1,0 +1,17 @@
+Sys.setenv(LANGUAGE='en')
+options(strinngAsFactors = FALSE)
+rm(list = ls())
+
+setwd()
+library(Seurat)
+library(tidyverse)
+library(dplyr)
+library(patchwork)
+library(ggplot2)
+
+#读取某路径下的所有文件：利用Read10X函数的特性（目录下所有的，并且根据vector的名字直接命名barcode）
+dir = c("young_1/","old_1")
+names(dir) = c("young","old")
+dir
+scRNA.all = Read10X(data.dir = dir)
+scRNA = CreateSeuratObject(scRNA.all,min.cells = 3, min.features = 40)
