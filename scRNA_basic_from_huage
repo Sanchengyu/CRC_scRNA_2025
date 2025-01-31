@@ -15,3 +15,9 @@ names(dir) = c("young","old")
 dir
 scRNA.all = Read10X(data.dir = dir)
 scRNA = CreateSeuratObject(scRNA.all,min.cells = 3, min.features = 40)
+#table查看分类，交替使用@$符号进行对V4对象的提取，差异分析中也用到deq？
+table(scRNA@meta.data$orig.ident)
+#质控包括去除低质量细胞和双细胞，前者包括总测序深度、线粒体基因比例等
+?PercentageFeatureSet
+#正则表达式，grep函数的使用，线粒体基因命名的规范 MT-
+scRNA[["precent.mt"]] = PercentageFeatureSet(scRNA, pattern = "^MT-")
