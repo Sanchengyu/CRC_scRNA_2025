@@ -21,3 +21,13 @@ table(scRNA@meta.data$orig.ident)
 ?PercentageFeatureSet
 #正则表达式，grep函数的使用，线粒体基因命名的规范 MT-
 scRNA[["precent.mt"]] = PercentageFeatureSet(scRNA, pattern = "^MT-")
+#红细胞相关基因 固定的？ 基因集 约为10个？ 一般细胞数量少，可以不做
+#Feature 每个细胞中检测到的基因数，不可过少，总共2w+个基因
+#Count 每个细胞总的UMI数，可以理解为测序深度。类似所有基因的reads？
+#根据小提琴图，确定阈值选择，一般线粒体基因<20%,nFeature_RNA > 300 & nFeature_RNA < 7000,
+scRNA_QC = subset(scRNA, subset = nFeature_RNA > 300 & nFeature_RNA < 7000 & precent.mt <20 & nCount_RNA >1000)
+#细胞数量得到下降
+?NormalizeData
+#表达量x10000/total UMI +1 后 取ln、
+scRNA_QC = NormalizeData(scRNA_QC, normalization.method = "LogNormalize",
+                         scale.factor = 10000 )
