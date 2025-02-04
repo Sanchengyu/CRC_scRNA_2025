@@ -1,3 +1,4 @@
+#project见 huage_prac 
 Sys.setenv(LANGUAGE='en')
 options(strinngAsFactors = FALSE)
 rm(list = ls())
@@ -28,6 +29,14 @@ scRNA[["precent.mt"]] = PercentageFeatureSet(scRNA, pattern = "^MT-")
 scRNA_QC = subset(scRNA, subset = nFeature_RNA > 300 & nFeature_RNA < 7000 & precent.mt <20 & nCount_RNA >1000)
 #细胞数量得到下降
 ?NormalizeData
-#表达量x10000/total UMI +1 后 取ln、
-scRNA_QC = NormalizeData(scRNA_QC, normalization.method = "LogNormalize",
-                         scale.factor = 10000 )
+#表达量x10000/total UMI +1 后 取ln、.目的是将测序深度归为1
+scRNA_QC = NormalizeData(scRNA_QC, normalization.method = "LogNormalize", scale.factor = 10000 )
+#归一化后的数据储存在assays-RNA-layers中counts下面的data
+#降维： 每个gene是一个维度。考虑的是变化大的gene，去繁从简
+#2维umap、3维umap。见于2024CNS 。分别代表所有维度的降维后的特征1、2、3
+#降维聚类的基本pipeline：找高变基因、ScaleData、RunPCA、FindNeighbors、FindClusters
+#高变gene储存在assays-RNA-layers-meta.data的var.features中
+?FindVariableFeatures
+scRNA_QC = FindVariableFeatures(scRNA_QC, selection.method = "vst", nfeatures = 3000 )
+#数据放缩 scale，目的是标准化数据，变成均值为0，方差为1，以将所有基因的权重变为相同重要的（避免管家基因的影响等）
+scRNA_QC = ScaleData(scRNA_QC , verbose = TRUE)
