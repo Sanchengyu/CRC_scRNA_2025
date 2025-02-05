@@ -39,4 +39,13 @@ scRNA_QC = NormalizeData(scRNA_QC, normalization.method = "LogNormalize", scale.
 ?FindVariableFeatures
 scRNA_QC = FindVariableFeatures(scRNA_QC, selection.method = "vst", nfeatures = 3000 )
 #数据放缩 scale，目的是标准化数据，变成均值为0，方差为1，以将所有基因的权重变为相同重要的（避免管家基因的影响等）
+#默认是对高变基因进行放缩，储存在data下的scaledata中。
 scRNA_QC = ScaleData(scRNA_QC , verbose = TRUE)
+#PCA主成分分析降维,默认是50，储存在reduction中
+scRNA_QC = RunPCA(scRNA_QC , features = VariableFeatures(scRNA_QC) , verbose = TRUE, npcs = 30)
+#展示每个pca维度对整体的贡献度。越往前的pc包含的特征信息越多。越往后的PC越可能有更多的技术噪音，前面更可能反映生物信息
+#三维PCA图显示前三个pc的占比，及各样本的空间分布情况。
+ElbowPlot(scRNA_QC , ndims = 30, reduction = "pca" )
+#选择合适的PC数进行后续的降维
+scRNA_QC = RunUMAP(scRNA_QC , reduction = "pca", dims = 1:20)
+#降维后进行聚类。聚类：高维的无向有权图，邻接矩阵
