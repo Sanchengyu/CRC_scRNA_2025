@@ -49,3 +49,6 @@ ElbowPlot(scRNA_QC , ndims = 30, reduction = "pca" )
 #选择合适的PC数进行后续的降维
 scRNA_QC = RunUMAP(scRNA_QC , reduction = "pca", dims = 1:20)
 #降维后进行聚类。聚类：高维的无向有权图，邻接矩阵
+scRNA_QC = FindNeighbors(scRNA_QC , reduction = "pca", dims = 1:20)
+scRNA_QC = FindClusters(scRNA_QC , resolution = 0.5)
+DimPlot(scRNA_QC ,reduction = "umap", label = T )
